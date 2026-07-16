@@ -14,11 +14,43 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v7
+      - name: Checkout repository
+        uses: actions/checkout@v7
 
-      - name: Verify summary GitHub token
+      - name: Verify summary token is configured
         shell: bash
         env:
-          SUMMARY_GITHUB_TOKEN: ${{ secrets.SUMMARY_GITHUB_TOKEN }}
+          SUMMARY_TOKEN: ${{ secrets.SUMMARY_GITHUB_TOKEN }}
         run: |
-          if
+          if [ -z "$SUMMARY_TOKEN" ]; then
+            echo "::error::Repository secret SUMMARY_GITHUB_TOKEN is missing or empty."
+            exit 1
+          fi
+
+          status=$(curl --silent --output /dev/null --write-out "%{http_code}" \
+            --header "Authorization: Bearer $SUMMARY_TOKEN" \
+            --header "Accept: application/vnd.github+json" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/user)
+
+          if [ "$status" != "200" ]; then
+            echo "::error::SUMMARY_GITHUB_TOKEN authentication failed with HTTP $status. Replace the repository secret with a valid token."
+            exit 1
+          fi
+
+          echo "SUMMARY_GITHUB_TOKEN authentication succeeded."
+
+      - name: Generate GitHub profile summary cards
+        uses: vn7n24fzkq/github-profile-summary-cards@release
+        env:
+          GITHUB_TOKEN: ${{ secrets.SUMMARY_GITHUB_TOKEN }}
+        with:
+          USERNAME: ${{ github.repository_owner }}
+          BRANCH_NAME: main
+          UTC_OFFSET: 9
+          EXCLUDE: ""
+          AUTO_PUSH: true
+          THEME: github_dark
+          ANIMATION: rise
+          DURATION: 2
+          NAME: Lee Won Seob
