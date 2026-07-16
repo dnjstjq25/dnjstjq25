@@ -1,7 +1,5 @@
 <div align="center">
 
-# Lee Won Seob
-
 ### Full-stack Web Developer
 
 사용자가 실제로 쓰는 기능을 만들고,  
